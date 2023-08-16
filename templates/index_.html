@@ -1,0 +1,153 @@
+<head>
+  <script src="/static/js/lib.js"></script>
+  <script src="/static/js/config.js"></script>
+  <script src="/static/js/two.min.js"></script>
+  <style>
+    body {
+      background-color: #000000
+    }
+  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Orbitron&display=swap&text=01234567689:AMP" rel="stylesheet"> 
+</head>
+<div id="canvas">hej</div>
+<script>
+let currentTime = "";
+let runtimeMode = "{{mode}}";
+
+var canvas = document.getElementById('canvas');
+var two = new Two({
+  fullscreen: true,
+  autostart: true
+}).appendTo(canvas);
+
+var clockArea = new Area(0, 0, two.width * config.clockWProp, two.height);
+var infoArea = new Area(two.width * config.clockWProp, 0, two.width, two.height);
+
+// clockBorder = areaBorder(clockArea, 'clock')
+// infoBorder = areaBorder(infoArea, 'info');
+
+// Group of whole clock area
+let clockGroup = two.makeGroup();
+
+// Read and parse segments
+const segments_raw = JSON.parse("{{segments}}");
+const segments = makeSegments(segments_raw);
+
+// Numerical Clock
+numClock = two.makeText(timeStr(), clockArea.center.x, clockArea.center.y * config.numClockYProp);
+numClock.fill = config.clockCol;
+numClock.size = config.numClockSize;
+numClock.family = config.numClockFamily;
+
+// Boundary rectangle of numerical clock
+const br = numClock.getBoundingClientRect();
+numClockBorder = two.makeRectangle(
+  numClock.position.x,
+  numClock.position.y-6,
+  br.width * config.numClockBorderWidthProp,
+  br.height * config.numClockBorderHeightProp
+);
+numClockBorder.fill = 'rgba(0,0,0,0)';
+numClockBorder.linewidth = config.numClockBorderLineWidth;
+clockGroup.add(numClockBorder);
+
+// Circular clock
+
+const clockRadius = config.clockDiamProp * two.height / 2;
+const clockCircX = clockArea.center.x;
+const clockCircY = clockArea.height * config.clockYPosProp;
+const clockCirc = two.makeCircle(clockCircX, clockCircY, clockRadius);
+clockCirc.linewidth = config.clockLineWidth;
+clockCirc.noFill();
+clockGroup.add(clockCirc);
+clockGroup.stroke = config.clockCol;
+
+// Generate functions from lib.js
+const drawSliceLine = func_drawSliceLine(config, clockCircX, clockCircY);
+const drawSliceText = func_drawSliceText(config, clockCircX, clockCircY, clockRadius);
+const drawSlices = func_drawSlices(config, segments);
+const highlightClockSector = func_highlightClockSector(config, clockRadius, clockCircX, clockCircY);
+const drawArm = func_drawArm(config, clockCircX, clockCircY);
+const drawSegmentStatus = func_drawSegmentStatus(config, infoArea, numClockBorder);
+const getSegmentStatus = func_getSegmentStatus(segments)
+
+// triangle function between 0 and 1
+// doesn't work in lib.js for some reason, maybe async issue?
+const tri = (t) => {
+  const u = t%1. 
+  return u <= 0.5 ? u * 2. : 1. - (u - 0.5) * 2.;
+}
+
+// // Playing with segments data structure
+// for (let i = 0; i < segments.length; i++) {
+//   for (let j = 0; j < segments[i].length; j++) {
+//     let txt = two.makeText(segments[i][j].title + "(" + i + "): " + segments[i][j].length + ", " + segments[i][j].total, infoArea.center.x, 50+i*(segments[i].length*20+150)+j*20);
+//     txt.fill = config.clockCol;
+//     clockGroup.add(txt);
+//   }
+// }
+
+// // writing the runtimeMode
+// let txt = two.makeText(runtimeMode, infoArea.center.x, 10);
+// txt.fill = config.clockCol;
+// clockGroup.add(txt);
+
+// all initialisation should be here
+drawSlices(0);
+let arm = drawArm(0, null);
+let [seg, nextSeg] = getSegmentStatus(0);
+let segmentStatusOpacity = 0.2;
+let segmentStatusBlinking = false;
+let segmentStatus = drawSegmentStatus(seg, nextSeg);
+segmentStatus.opacity = segmentStatusOpacity;
+
+let t0 = time();
+let t, secs, mins, hour, prevMins, prevHour = 0;
+
+if(runtimeMode == 'start') {
+  t0 = time();
+}
+
+function updSec() {
+  switch(runtimeMode) {
+    case 'start': 
+      t = (time() - t0) * 10;
+      secs = t / 1000;
+      mins = secs / 60;
+      hour = Math.floor(mins / 60);
+      if (mins != prevMins) {
+        segmentStatus.remove();
+        [seg, nextSeg] = getSegmentStatus(mins);
+        segmentStatus = drawSegmentStatus(seg, nextSeg)
+      }
+      if (hour != prevHour) 
+        drawSlices(mins);
+      segmentStatusBlinking = mins >= (seg.total - 1);
+      arm = drawArm(mins, arm);
+      prevHour = hour;
+      prevMins = mins;
+      break;
+    }
+    // must be last to display correctly for some reason???
+    numClock.value = timeStr();
+}
+
+function updFrame() {
+  if (segmentStatusBlinking)
+    segmentStatusOpacity = tri((time() - t0)*0.001);
+  else
+    segmentStatusOpacity = 1.;
+  segmentStatus.opacity = segmentStatusOpacity;
+}
+
+// update block
+two.bind('update', function (frame) {
+  if (frame % 30 == 0) { // approx 1-2 times per second
+    updSec();
+  }
+  updFrame();
+})
+</script>
+hej

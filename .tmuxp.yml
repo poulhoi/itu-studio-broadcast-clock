@@ -1,0 +1,14 @@
+session_name: flask-test
+start_directory: ~/dev/flask-test/
+windows:
+  - window_name: DEV
+    layout: main-horizontal
+    options:
+      main-pane-height: 50
+    shell_command_before:
+      - . .venv/bin/activate
+    panes:
+      - shell_command: nvim
+        focus: true
+      - flask --app clock run
+      -
