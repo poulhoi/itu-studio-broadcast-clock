@@ -1,15 +1,18 @@
+<!DOCTYPE html>
 <head>
     <style>
     body {
         background-color: #000000;
-        color: #fff;
     }
     </style>
+    <script src="/static/js/two.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Orbitron&display=swap&text=01234567689:AMP" rel="stylesheet"> 
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <div id="canvas"></div>
-<h1>hej</h1>
 <script>
+    const SEGMENTS_RAW = JSON.parse({{segments|tojson}});
 </script>
+<script type="module" src="/static/js/main.js"></script>

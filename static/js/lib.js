@@ -1,5 +1,44 @@
+const canvas = document.getElementById('canvas');
+export const two = new Two({
+  fullscreen: true,
+  autostart: true
+}).appendTo(canvas);
+
+export const config = {
+    bgCol: '#000000',
+    clockCol: '#FFFFEB', //'#6cf542',
+    clockLineWidth: 5,
+    clockWProp: 0.5,
+    clockDiamProp: 0.65,
+    clockYPosProp: 0.55,
+    clockArmLength: 0,
+    clockArmW: 4,
+    clockArmRoundness: 3,
+    clockArmCol: '#FFFFEB',
+    numClockYProp: 0.25,
+    numClockSize: 84,
+    numClockFamily: 'IBM Plex Mono',
+    infoSize: 48,
+    infoFamily: 'IBM Plex Mono',
+    numClockBorderWidthProp: 1.1,
+    numClockBorderHeightProp: 6.1,
+    numClockBorderLineWidth: 5,
+    segmentTextSize: 16,
+    segColors: {
+        "Intro/Outro": 'rgb(77,0,0)',
+        "Pause": 'rgb(0,77,0)',
+        "Content": 'rgb(0,0,77)'
+    },
+    segStatusTypeFlagW: 40,
+    segStatusTypeFlagMarginX: 10,
+    segStatusTextMarginX: 15,
+    segStatusMarginY: 20, // for both type flag and text
+    segStatusHeaderSize: 48,
+    segStatusCol: '#FFFFEB'
+};
+
 // Areas of the canvas
-class Area {
+export class Area {
     constructor(x1, y1, x2, y2) {
         this.upperLeft = new Two.Vector(x1, y1);
         this.lowerRight = new Two.Vector(x2, y2);
@@ -10,7 +49,7 @@ class Area {
 };
 
 // Segments of the clock
-class Segment {
+export class Segment {
     constructor(title, type, length, chronology, total) {
         this.title = title;
         this.type = type;
@@ -23,7 +62,7 @@ class Segment {
 }
 
 // helper function for debugging areas
-function areaBorder(area, label) {
+export function areaBorder(area, label) {
     let rect = two.makeRectangle(area.center.x, area.center.y, area.width, area.height);
     let txt = two.makeText(label, area.center.x, area.upperLeft.y + 20);
     rect.stroke = 'red'; txt.stroke = 'red';
@@ -32,9 +71,9 @@ function areaBorder(area, label) {
 }
 
 // Read in and create segments from Django, as sub-arrays indexed by slice group
-function makeSegments(raw) {
-    lastSlicegroup = 0;
-    segs = [];
+export function makeSegments(raw) {
+    let lastSlicegroup = 0;
+    let segs = [];
     for (const i in raw) {
         const title = raw[i]["title"];
         const typeString = raw[i]["type"];
@@ -53,7 +92,7 @@ function makeSegments(raw) {
 }
 
 // Numberical clock helpers
-function time() {
+export function time() {
     return new Date().getTime();
 }
 
@@ -65,11 +104,11 @@ function hms() {
     return [h, m, s];
 }
 
-function timeStr() {
-    [h, m, s] = hms();
-    hh = h < 10 ? '0' + h : h;
-    mm = m < 10 ? '0' + m : m;
-    ss = s < 10 ? '0' + s : s;
+export function timeStr() {
+    const [h, m, s] = hms();
+    const hh = h < 10 ? '0' + h : h;
+    const mm = m < 10 ? '0' + m : m;
+    const ss = s < 10 ? '0' + s : s;
     return hh + ':' + mm + ':' + ss;
 }
 
@@ -91,7 +130,7 @@ function clockAngle(t) {
 }
 
 // Drawing function generators
-function func_drawSliceLine(config, clockCircX, clockCircY) {
+function func_drawSliceLine(clockCircX, clockCircY, clockRadius) {
     return (t) => {
         const angle = clockAngle(t);
         const endPointRel = polToCar(clockRadius, angle);
@@ -103,10 +142,10 @@ function func_drawSliceLine(config, clockCircX, clockCircY) {
     };
 }
 
-function func_drawSliceText(config, clockCircX, clockCircY, clockRadius) {
+function func_drawSliceText(clockCircX, clockCircY, clockRadius) {
     return (title, t0, t1) => {
         const angle = clockAngle((t1 - t0) / 2 + t0);
-        txtPosRel = polToCar(clockRadius * 0.92, angle);
+        const txtPosRel = polToCar(clockRadius * 0.92, angle);
         const txtX = clockCircX + txtPosRel.x;
         const txtY = clockCircY + txtPosRel.y;
         let txt = two.makeText(title, txtX, txtY);
@@ -135,7 +174,23 @@ function func_drawSliceText(config, clockCircX, clockCircY, clockRadius) {
     }
 }
 
-function func_drawSlices(config, segments) {
+function func_highlightClockSector(clockCircX, clockCircY, clockRadius) {
+    return (t0, t, col) => {
+        const angleMargin = 0.0;
+        const innerRadius = 0;
+        const outerRadius = clockRadius - config.clockLineWidth * 0.5;
+        const startAngle = clockAngle(t0) + angleMargin;
+        const endAngle = clockAngle(t) - angleMargin;
+        const sector = two.makeArcSegment(clockCircX, clockCircY, innerRadius, outerRadius, startAngle, endAngle);
+        sector.stroke = sector.fill = col;
+        return sector;
+    }
+}
+
+export function func_drawSlices(segments, clockCircX, clockCircY, clockRadius) {
+    const highlightClockSector = func_highlightClockSector(clockCircX, clockCircY, clockRadius)
+    const drawSliceText = func_drawSliceText(clockCircX, clockCircY, clockRadius)
+    const drawSliceLine = func_drawSliceLine(clockCircX, clockCircY, clockRadius)
     return (t) => {
         let i = Math.max(Math.floor((t - 1) / 60), 0);
         // keep current clock if there are no more slice groups
@@ -150,6 +205,8 @@ function func_drawSlices(config, segments) {
             }
         }
         let slice, seg, arcSeg, txt = null;
+        // console.log(i)
+        // console.log(segments)
         for (let j = 0; j < segments[i].length; j++) {
             seg = segments[i][j];
             arcSeg = highlightClockSector(seg.total - seg.length, seg.total, config.segColors[seg.type]);
@@ -173,30 +230,17 @@ function func_drawSlices(config, segments) {
     }
 }
 
-function func_highlightClockSector(config, clockRadius, clockCircX, clockCircY) {
-    return (t0, t, col) => {
-        const angleMargin = 0.0;
-        const innerRadius = 0;
-        const outerRadius = clockRadius - config.clockLineWidth * 0.5;
-        const startAngle = clockAngle(t0) + angleMargin;
-        const endAngle = clockAngle(t) - angleMargin;
-        const sector = two.makeArcSegment(clockCircX, clockCircY, innerRadius, outerRadius, startAngle, endAngle);
-        sector.stroke = sector.fill = col;
-        return sector;
-    }
-}
-
 // The arm of the clock
-function func_drawArm(config, clockCircX, clockCircY) {
+export function func_drawArm(clockCircX, clockCircY, clockRadius) {
     return (t, arm) => {
         if (arm == null) {
             arm = two.makeRoundedRectangle(0, 0, config.clockArmW, clockRadius + config.clockArmLength, config.clockArmRoundness);
         }
         const angle = clockAngle(t);
         // position is center of arm, not endpoint
-        armPosRel = polToCar(clockRadius * 0.5 + config.clockArmLength * 0.5, angle);
-        armX = clockCircX + armPosRel.x;
-        armY = clockCircY + armPosRel.y;
+        const armPosRel = polToCar(clockRadius * 0.5 + config.clockArmLength * 0.5, angle);
+        const armX = clockCircX + armPosRel.x;
+        const armY = clockCircY + armPosRel.y;
         arm.position = new Two.Vector(armX, armY);
         arm.stroke = arm.fill = config.clockArmCol;
         arm.rotation = angle + Math.PI * 0.5;
@@ -228,7 +272,7 @@ function addLine(group, msg, x, y)  {
     return line;
 }
 
-function func_drawSegmentStatus(config, infoArea, numClockBorder) {
+export function func_drawSegmentStatus(infoArea, numClockBorder) {
     return (seg, nextSeg) => {
         if (seg != null) {
             const segStatusBorderX = infoArea.center.x - infoArea.width*0.5;
@@ -326,7 +370,7 @@ function func_drawSegmentStatus(config, infoArea, numClockBorder) {
 
 // returns [current segment, next segment] as an array.
 // might return either as null, if on the last segment or later
-function func_getSegmentStatus(segments) {
+export function func_getSegmentStatus(segments) {
     return (t) => {
         let seg = null;
         let nextSeg = null;
@@ -347,4 +391,9 @@ function func_getSegmentStatus(segments) {
         }
         return [null, null]
     }
+}
+
+export function tri(t) {
+      const u = t%1. 
+      return u <= 0.5 ? u * 2. : 1. - (u - 0.5) * 2.;
 }
