@@ -58,25 +58,28 @@ let segmentStatusBlinking = false;
 let segmentStatus = drawSegmentStatus(seg, nextSeg);
 segmentStatus.opacity = segmentStatusOpacity;
 
-let t0 = lib.time();
+let t0 = null
 let t, secs, mins, hour, prevMins, prevHour = 0;
 
 function updSec() {
     updRuntimeMode()
-    console.log(runtimeMode)
     switch(runtimeMode) {
         case 'start':
-            t = (lib.time() - t0) * 10;
+            if (t0 == null)
+                t0 = lib.time()
+            t = (lib.time() - t0) * 500;
             secs = t / 1000;
             mins = secs / 60;
             hour = Math.floor(mins / 60);
             if (mins != prevMins) {
                 segmentStatus.remove();
                 [seg, nextSeg] = getSegmentStatus(mins);
+                if (seg == null)
+                    break; // NOTE: simply stops the clock; should something else happen?
                 segmentStatus = drawSegmentStatus(seg, nextSeg);
             }
             if (hour != prevHour)
-            drawSlices(mins);
+                drawSlices(mins);
             segmentStatusBlinking = mins >= (seg.total - 1);
             arm = drawArm(mins, arm);
             prevHour = hour;
