@@ -4,7 +4,7 @@ const two = lib.two;
 
 let currentTime = "";
 
-let runtimeMode = "init";
+let runtimeMode = "";
 
 // TODO:
 // do this once a second to refresh the status!
