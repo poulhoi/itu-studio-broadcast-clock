@@ -2,7 +2,7 @@ import os
 import re
 from json import dumps
 
-DATA_FILENAME = "data/segments.csv"
+DATA_FILENAME = "./flaskr/data/segments.csv"
 OUT_COL_SEP = ','
 OUT_ROW_SEP = ';'
 
