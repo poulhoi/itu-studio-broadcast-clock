@@ -6,7 +6,7 @@ def parse_runtime_mode(s):
     match s.lower():
         case 'start': return 'start' 
         case 'pause': return 'pause' 
-        case 'skip' : return'skip'  
+        case 'skip' : return 'skip'  
         case 'reset': return 'reset' 
         case _      : return 'init'
 

@@ -10,5 +10,5 @@ windows:
     panes:
       - shell_command: nvim
         focus: true
-      - flask --app clock run
+      - flask --app flaskr run
       -

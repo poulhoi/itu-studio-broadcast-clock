@@ -165,10 +165,6 @@ function func_drawSliceText(clockCircX, clockCircY, clockRadius) {
             txt.rotation = angle + Math.PI;
             txt.alignment = 'left';
         }
-        // const br = txt.getBoundingClientRect();
-        // const rect = two.makeRectangle(txtX, txtY, br.width, br.height);
-        // rect.stroke = 'red';
-        // rect.fill = 'rgba(0,0,0,0)';
         txt.fill = txt.stroke = config.clockCol;
         return txt;
     }
@@ -205,8 +201,6 @@ export function func_drawSlices(segments, clockCircX, clockCircY, clockRadius) {
             }
         }
         let slice, seg, arcSeg, txt = null;
-        // console.log(i)
-        // console.log(segments)
         for (let j = 0; j < segments[i].length; j++) {
             seg = segments[i][j];
             arcSeg = highlightClockSector(seg.total - seg.length, seg.total, config.segColors[seg.type]);
@@ -214,7 +208,6 @@ export function func_drawSlices(segments, clockCircX, clockCircY, clockRadius) {
             slice = drawSliceLine(seg.total);
             seg.group.add(arcSeg);
             seg.group.add(txt);
-            // seg.group.add(slice);
         }
         // draw 12 o' clock line for last segment as dotted if it overlaps with next 
         if (i + 1 < segments.length && seg.title == segments[i + 1][0].title) {

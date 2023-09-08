@@ -58,19 +58,41 @@ let segmentStatusBlinking = false;
 let segmentStatus = drawSegmentStatus(seg, nextSeg);
 segmentStatus.opacity = segmentStatusOpacity;
 
-let t0 = null
-let t, secs, mins, hour, prevMins, prevHour = 0;
+let t0, t, paused, pauseLength, pauseStart, secs, mins, hour, prevMins, prevHour;
+
+function initTime() {
+    t0 = null
+    t, secs, mins, hour, prevMins, prevHour, pauseLength, pauseStart = 0;
+    paused = false;
+}
+function updTime() {
+    if (t0 == null)
+        return;
+    t = (lib.time() - t0) *  300;
+    secs = t / 1000;
+    mins = secs / 60;
+}
+
+initTime()
+
+
+// const debugText = two.makeText("", 800, 500);
+// debugText.fill = "white";
+// debugText.size = config.numClockSize;
+// debugText.family = config.numClockFamily;
 
 function updSec() {
     updRuntimeMode()
     switch(runtimeMode) {
         case 'start':
             if (t0 == null)
-                t0 = lib.time()
-            t = (lib.time() - t0) * 500;
-            secs = t / 1000;
-            mins = secs / 60;
-            hour = Math.floor(mins / 60);
+                t0 = lib.time();
+            if(paused) {
+                paused = false;
+                t0 += pauseLength;
+                pauseLength = 0;
+            }
+            updTime();
             if (mins != prevMins) {
                 segmentStatus.remove();
                 [seg, nextSeg] = getSegmentStatus(mins);
@@ -84,6 +106,34 @@ function updSec() {
             arm = drawArm(mins, arm);
             prevHour = hour;
             prevMins = mins;
+            break;
+        case 'pause':
+            if (t0 == null)
+                t0 = lib.time();
+            if(!paused) {
+                pauseStart = lib.time();
+                paused = true;
+            }
+            pauseLength = (lib.time() - pauseStart);
+            break;
+
+        case 'skip':
+            //BUG: causes infinite loop?
+            if (t0 == null)
+                t0 = lib.time();
+            updTime();
+            [seg, nextSeg] = getSegmentStatus(mins);
+            if (seg == null)
+                break; // NOTE: same applies as the 'start' case
+            const remainingSeg = seg.total - t;
+            t0 -= remainingSeg;
+            updTime();
+            [seg, nextSeg] = getSegmentStatus(mins);
+            segmentStatus.remove();
+            segmentStatus = drawSegmentStatus(seg, nextSeg);
+            break;
+        case 'reset':
+            initTime();
             break;
     }
     numClock.value = lib.timeStr();
