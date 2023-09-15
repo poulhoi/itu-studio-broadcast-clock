@@ -2,7 +2,6 @@ import os
 import re
 from json import dumps
 
-DATA_FILENAME = "./flaskr/data/segments.csv"
 OUT_COL_SEP = ','
 OUT_ROW_SEP = ';'
 
@@ -26,7 +25,7 @@ def sanitize(str):
 def read_segments_file(filename):
     sg = lambda t: str((t-1)//60) # get slicegroup index from total
     data = ""
-    with open(DATA_FILENAME, 'r') as f:
+    with open(filename, 'r') as f:
         lines = []
         f.readline() # ignore column titles
         while True:
@@ -60,8 +59,8 @@ def read_segments_file(filename):
                 data += length_str + OUT_COL_SEP + total_str + OUT_COL_SEP + sg(total) + OUT_ROW_SEP
     return data
 
-def segments_json():
-    data = read_segments_file(DATA_FILENAME)
+def segments_json(filename):
+    data = read_segments_file(filename)
     segments = list()
     for segment_raw in data.split(OUT_ROW_SEP)[:-1]: # discard empty row after last separator
         segment = dict()

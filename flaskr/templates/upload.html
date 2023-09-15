@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<head>
+    <style>
+    body {
+        background-color: #000000;
+        color: #FFFFFF;
+    }
+    .main {
+        position: absolute;
+        left: 50%;
+        top: 10%;
+        transform: translate(-50%,0%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 90%;
+    }
+    .main h1 {
+        padding-bottom: 20px;
+    }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Orbitron&display=swap&text=01234567689:AMP" rel="stylesheet"> 
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="main">
+        <h1>ITU Studios Broadcast Clock Schedule</h1>
+        <form method=post enctype=multipart/form-data>
+            <input type=file name=file>
+            <input type=submit value=Upload>
+        </form>
+    </div>
+</body>

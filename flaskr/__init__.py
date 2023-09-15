@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, render_template, g
+from flask import Flask, request, render_template, g, redirect, url_for
+from werkzeug.utils import secure_filename
 from . import read_segments, db
 
 def parse_runtime_mode(s):
@@ -10,11 +11,19 @@ def parse_runtime_mode(s):
         case 'reset': return 'reset' 
         case _      : return 'init'
 
+UPLOAD_FOLDER='data'
+ALLOWED_EXTENSIONS = { 'csv', 'txt' }
+
+def allowed_file(filename):
+    return '.' in filename and \
+       filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY = "dev",
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite')
+        DATABASE = os.path.join(app.instance_path, 'flaskr.sqlite'),
+        UPLOAD_FOLDER = os.path.join(app.root_path, UPLOAD_FOLDER),
     )
 
     if test_config is None:
@@ -47,13 +56,33 @@ def create_app(test_config=None):
         return runtime_mode
 
     @app.route("/")
-    def render():
+    def index():
         app_db = db.get_db()
         app_db.execute("delete from state")
         app_db.execute("insert into state (runtime_mode) values ('init')")
         app_db.commit()
-        return render_template("index.html", runtime_mode='init', segments=read_segments.segments_json())
+        segments_file = os.path.join(app.config['UPLOAD_FOLDER'], 'segments.csv')
+        if os.path.isfile(segments_file):
+            segments = read_segments.segments_json(segments_file)
+        else:
+            segments = '[]'
+        return render_template("index.html", runtime_mode='init', segments=segments)
+
+    @app.route("/upload", methods=['GET', 'POST'])
+    def upload():
+        print()
+        if request.method =='POST':
+            if 'file' not in request.files:
+                return redirect(request.url)
+            file = request.files['file']
+            if file.filename == '':
+                return redirect(request.url)
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # return redirect(url_for('index'))
+                return "Upload succesful"
+        return render_template("upload.html")
 
     db.init_app(app)
-
     return app

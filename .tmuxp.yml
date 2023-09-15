@@ -11,4 +11,5 @@ windows:
       - shell_command: nvim
         focus: true
       - flask --app flaskr run
+      - node
       -

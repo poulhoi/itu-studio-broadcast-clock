@@ -3,11 +3,27 @@ const config = lib.config;
 const two = lib.two;
 
 let runtimeMode = "init";
+let forceRuntimeMode = null;
 
 function updRuntimeMode() {
-    fetch('/runtime_mode').then(resp => resp.text())
-                          .then(data => runtimeMode = data)
-                          .catch(error => console.log(error))
+    if (forceRuntimeMode) {
+        runtimeMode = forceRuntimeMode;
+        forceRuntimeMode = null;
+    } else {
+        fetch('/runtime_mode').then(resp => resp.text())
+                              .then(data => runtimeMode = data)
+                              .catch(error => console.log(error))
+    }
+}
+
+function postRuntimeMode(mode) {
+    forceRuntimeMode = mode;
+    const data = new FormData()
+    data.append('runtime_mode', mode)
+    fetch('/runtime_mode', {
+        method: "POST",
+        body: data
+    })
 }
 
 const clockArea = new lib.Area(0, 0, two.width * config.clockWProp, two.height);
@@ -15,6 +31,7 @@ const infoArea = new lib.Area(two.width * config.clockWProp, 0, two.width, two.h
 
 let clockGroup = two.makeGroup();
 
+// SEGMENTS_RAW is defined in index.html
 const segments = lib.makeSegments(SEGMENTS_RAW);
 
 // Numerical Clock
@@ -56,7 +73,8 @@ let [seg, nextSeg] = getSegmentStatus(0);
 let segmentStatusOpacity = 0.2;
 let segmentStatusBlinking = false;
 let segmentStatus = drawSegmentStatus(seg, nextSeg);
-segmentStatus.opacity = segmentStatusOpacity;
+if (segmentStatus) 
+    segmentStatus.opacity = segmentStatusOpacity;
 
 let t0, t, paused, pauseLength, pauseStart, secs, mins, hour, prevMins, prevHour;
 
@@ -65,92 +83,110 @@ function initTime() {
     t, secs, mins, hour, prevMins, prevHour, pauseLength, pauseStart = 0;
     paused = false;
 }
+
 function updTime() {
     if (t0 == null)
         return;
-    t = (lib.time() - t0) *  300;
+    t = (lib.time() - t0);
     secs = t / 1000;
     mins = secs / 60;
 }
 
-initTime()
+function runtimeInit() {
+    arm = drawArm(0, arm);
+    t0 = lib.time();
+    updTime();
+}
 
+function runtimeStart() {
+    if (t0 == null)
+        t0 = lib.time();
+    if(paused) {
+        paused = false;
+        t0 += pauseLength;
+        pauseLength = 0;
+    }
+    updTime();
+    if (mins != prevMins) {
+        if (segmentStatus)
+            segmentStatus.remove();
+        [seg, nextSeg] = getSegmentStatus(mins);
+        if (seg == null)
+            return; // NOTE: simply stops the clock; should something else happen?
+        segmentStatus = drawSegmentStatus(seg, nextSeg);
+    }
+    if (hour != prevHour)
+        drawSlices(mins);
+    segmentStatusBlinking = mins >= (seg.total - 1);
+    arm = drawArm(mins, arm);
+    prevHour = hour;
+    prevMins = mins;
+}
 
-// const debugText = two.makeText("", 800, 500);
-// debugText.fill = "white";
-// debugText.size = config.numClockSize;
-// debugText.family = config.numClockFamily;
+function runtimePause() {
+    if (t0 == null)
+        t0 = lib.time();
+    if(!paused) {
+        pauseStart = lib.time();
+        paused = true;
+    }
+    pauseLength = (lib.time() - pauseStart);
+}
+
+function runtimeSkip() {
+    if (t0 == null)
+        t0 = lib.time();
+    updTime();
+    [seg, nextSeg] = getSegmentStatus(mins);
+    if (seg == null)
+        return; // NOTE: same applies as the 'start' case
+    const remainingSeg = seg.total*60_000 - t;
+    t0 -= remainingSeg;
+    updTime();
+    [seg, nextSeg] = getSegmentStatus(mins);
+    if (segmentStatus)
+        segmentStatus.remove();
+    segmentStatus = drawSegmentStatus(seg, nextSeg);
+    arm = drawArm(mins, arm);
+    if (paused) {
+        postRuntimeMode('pause');
+    } else {
+        postRuntimeMode('start');
+    }
+}
+
+function runtimeReset() {
+    initTime();
+    postRuntimeMode('start');
+}
 
 function updSec() {
-    updRuntimeMode()
+    updRuntimeMode();
     switch(runtimeMode) {
-        case 'start':
-            if (t0 == null)
-                t0 = lib.time();
-            if(paused) {
-                paused = false;
-                t0 += pauseLength;
-                pauseLength = 0;
-            }
-            updTime();
-            if (mins != prevMins) {
-                segmentStatus.remove();
-                [seg, nextSeg] = getSegmentStatus(mins);
-                if (seg == null)
-                    break; // NOTE: simply stops the clock; should something else happen?
-                segmentStatus = drawSegmentStatus(seg, nextSeg);
-            }
-            if (hour != prevHour)
-                drawSlices(mins);
-            segmentStatusBlinking = mins >= (seg.total - 1);
-            arm = drawArm(mins, arm);
-            prevHour = hour;
-            prevMins = mins;
-            break;
-        case 'pause':
-            if (t0 == null)
-                t0 = lib.time();
-            if(!paused) {
-                pauseStart = lib.time();
-                paused = true;
-            }
-            pauseLength = (lib.time() - pauseStart);
-            break;
-
-        case 'skip':
-            //BUG: causes infinite loop?
-            if (t0 == null)
-                t0 = lib.time();
-            updTime();
-            [seg, nextSeg] = getSegmentStatus(mins);
-            if (seg == null)
-                break; // NOTE: same applies as the 'start' case
-            const remainingSeg = seg.total - t;
-            t0 -= remainingSeg;
-            updTime();
-            [seg, nextSeg] = getSegmentStatus(mins);
-            segmentStatus.remove();
-            segmentStatus = drawSegmentStatus(seg, nextSeg);
-            break;
-        case 'reset':
-            initTime();
-            break;
+        case 'init' : runtimeInit() ; break;
+        case 'start': runtimeStart(); break;
+        case 'pause': runtimePause(); break;
+        case 'skip' : runtimeSkip() ; break;
+        case 'reset': runtimeReset(); break;
     }
     numClock.value = lib.timeStr();
 }
 
 function updFrame() {
-  if (segmentStatusBlinking)
-    segmentStatusOpacity = lib.tri((lib.time() - t0)*0.001);
-  else
-    segmentStatusOpacity = 1.;
-  segmentStatus.opacity = segmentStatusOpacity;
+    if (segmentStatusBlinking)
+        segmentStatusOpacity = lib.tri((lib.time() - t0)*0.001);
+    else
+        segmentStatusOpacity = 1.;
+    if (segmentStatus)
+        segmentStatus.opacity = segmentStatusOpacity;
 }
+
+initTime()
 
 // update block
 two.bind('update', function (frame) {
-  if (frame % 30 == 0) {
-    updSec();
-  }
-  updFrame();
+    if (frame % 30 == 0) {
+        updSec();
+    }
+    updFrame();
 })

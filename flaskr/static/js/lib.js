@@ -243,7 +243,7 @@ export function func_drawArm(clockCircX, clockCircY, clockRadius) {
 
 // Reformat titles that are too long
 function reduceString(t, ratio) {
-    i = Math.floor(t.length / ratio);
+    const i = Math.floor(t.length / ratio);
     return t.slice(0, i) + "...";
 }
 
@@ -316,7 +316,7 @@ export function func_drawSegmentStatus(infoArea, numClockBorder) {
                 }
                 if (addEllipsis)
                     sndl += "...";
-                snd = addLine(txtGr, sndl, fst.position.x, fst.position.y + fst.size + 10);
+                    sndl = addLine(txtGr, sndl, fst.position.x, fst.position.y + fst.size + 10);
                 }
             }
 

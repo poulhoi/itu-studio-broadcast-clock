@@ -1,4 +1,3 @@
-- Transport Status Icon (play, pause, fast-forward for skip etc)
-
 Maybe:
-- Rewind?
+- Transport Status Icon (play, pause, fast-forward for skip etc)
+- Rewind function
