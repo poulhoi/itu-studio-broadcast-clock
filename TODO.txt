@@ -1,0 +1,4 @@
+- Transport Status Icon (play, pause, fast-forward for skip etc)
+
+Maybe:
+- Rewind?
