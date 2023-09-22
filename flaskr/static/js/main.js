@@ -157,7 +157,7 @@ function runtimeSkip() {
 
 function runtimeReset() {
     initTime();
-    postRuntimeMode('start');
+    postRuntimeMode('init');
 }
 
 function updSec() {

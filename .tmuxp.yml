@@ -1,5 +1,5 @@
-session_name: flask-test
-start_directory: ~/dev/flask-test/
+session_name: itu-studio-broadcast-clock
+start_directory: .
 windows:
   - window_name: DEV
     layout: main-horizontal
