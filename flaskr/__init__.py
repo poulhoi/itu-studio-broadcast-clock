@@ -4,12 +4,12 @@ from werkzeug.utils import secure_filename
 from . import read_segments, db
 
 def parse_runtime_mode(s):
-    match s.lower():
-        case 'start': return 'start' 
-        case 'pause': return 'pause' 
-        case 'skip' : return 'skip'  
-        case 'reset': return 'reset' 
-        case _      : return 'init'
+    s = s.lower()
+    if s == 'start': return 'start'
+    if s == 'pause': return 'pause'
+    if s == 'skip' : return 'skip'  
+    if s == 'reset': return 'reset' 
+    return 'init'
 
 UPLOAD_FOLDER='data'
 ALLOWED_EXTENSIONS = { 'csv', 'txt' }
