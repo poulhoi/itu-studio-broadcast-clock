@@ -1,0 +1,5 @@
+#!/bin/bash
+cd ~/itu-studio-broadcast-clock
+source .venv/bin/activate
+flask --app flaskr init-db
+flask --app flaskr run
