@@ -55,17 +55,21 @@ def create_app(test_config=None):
         runtime_mode = row[0][0]
         return runtime_mode
 
+    def read_segments():
+        segments_file = os.path.join(app.config['UPLOAD_FOLDER'], 'segments.csv')
+        if os.path.isfile(segments_file):
+            segments = read_segments.segments_json(segments_file)
+        else:
+            segments = '[]'
+        return segments
+
     @app.route("/")
     def index():
         app_db = db.get_db()
         app_db.execute("delete from state")
         app_db.execute("insert into state (runtime_mode) values ('init')")
         app_db.commit()
-        segments_file = os.path.join(app.config['UPLOAD_FOLDER'], 'segments.csv')
-        if os.path.isfile(segments_file):
-            segments = read_segments.segments_json(segments_file)
-        else:
-            segments = '[]'
+        segments = read_segments()
         return render_template("index.html", runtime_mode='init', segments=segments)
 
     @app.route("/upload", methods=['GET', 'POST'])

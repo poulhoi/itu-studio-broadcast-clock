@@ -70,7 +70,7 @@ export function areaBorder(area, label) {
     return rect;
 }
 
-// Read in and create segments from Django, as sub-arrays indexed by slice group
+// Read in and create segments from raw json, as sub-arrays indexed by slice group
 export function makeSegments(raw) {
     let lastSlicegroup = 0;
     let segs = [];
