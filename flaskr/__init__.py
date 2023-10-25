@@ -55,7 +55,7 @@ def create_app(test_config=None):
         runtime_mode = row[0][0]
         return runtime_mode
 
-    def read_segments():
+    def read_segments_from_file():
         segments_file = os.path.join(app.config['UPLOAD_FOLDER'], 'segments.csv')
         if os.path.isfile(segments_file):
             segments = read_segments.segments_json(segments_file)
@@ -69,7 +69,7 @@ def create_app(test_config=None):
         app_db.execute("delete from state")
         app_db.execute("insert into state (runtime_mode) values ('init')")
         app_db.commit()
-        segments = read_segments()
+        segments = read_segments_from_file()
         return render_template("index.html", runtime_mode='init', segments=segments)
 
     @app.route("/upload", methods=['GET', 'POST'])
