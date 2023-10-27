@@ -5,27 +5,6 @@ const two = lib.two;
 let runtimeMode = "init";
 let forceRuntimeMode = null;
 
-function updRuntimeMode() {
-    if (forceRuntimeMode) {
-        runtimeMode = forceRuntimeMode;
-        forceRuntimeMode = null;
-    } else {
-        fetch('/runtime_mode').then(resp => resp.text())
-                              .then(data => runtimeMode = data)
-                              .catch(error => console.log(error))
-    }
-}
-
-function postRuntimeMode(mode) {
-    forceRuntimeMode = mode;
-    const data = new FormData()
-    data.append('runtime_mode', mode)
-    fetch('/runtime_mode', {
-        method: "POST",
-        body: data
-    })
-}
-
 const clockArea = new lib.Area(0, 0, two.width * config.clockWProp, two.height);
 const infoArea = new lib.Area(two.width * config.clockWProp, 0, two.width, two.height);
 
@@ -65,7 +44,8 @@ clockGroup.stroke = config.clockCol;
 const drawSlices = lib.func_drawSlices(segments, clockCircX, clockCircY, clockRadius);
 const drawArm = lib.func_drawArm(clockCircX, clockCircY, clockRadius);
 const drawSegmentStatus = lib.func_drawSegmentStatus(infoArea, numClockBorder);
-const getSegmentStatus = lib.func_getSegmentStatus(segments)
+const getSegmentStatus = lib.func_getSegmentStatus(segments);
+const drawRuntimeStatus = lib.func_drawRuntimeStatus(infoArea);
 
 drawSlices(0);
 let arm = drawArm(0, null);
@@ -75,8 +55,51 @@ let segmentStatusBlinking = false;
 let segmentStatus = drawSegmentStatus(seg, nextSeg);
 if (segmentStatus) 
     segmentStatus.opacity = segmentStatusOpacity;
+let runtimeStatusOpacity = 0.2;
+let runtimeStatusBlinking = false;
+let runtimeStatus = drawRuntimeStatus(runtimeMode);
+if (runtimeStatus) 
+    runtimeStatus.opacity = runtimeStatusOpacity;
+let runtimeStatusBlinkT0 = 0;
 
 let t0, t, paused, pauseLength, pauseStart, secs, mins, hour, prevMins, prevHour;
+
+function updRuntimeStatus() {
+    if (runtimeStatus)
+        runtimeStatus.remove();
+    runtimeStatus = drawRuntimeStatus(runtimeMode);
+
+}
+
+function updRuntimeMode() {
+    const prevRuntimeMode = runtimeMode;
+    if (forceRuntimeMode) {
+        runtimeMode = forceRuntimeMode;
+        updRuntimeStatus();
+        forceRuntimeMode = null;
+    } else {
+        fetch('/runtime_mode')
+            .then(resp => resp.text())
+            .then(data => {
+                runtimeMode = data;
+                updRuntimeStatus();
+            })
+            .catch(error => console.log(error))
+    }
+    if (prevRuntimeMode != runtimeMode) {
+    }
+}
+
+function postRuntimeMode(mode) {
+    forceRuntimeMode = mode;
+    const data = new FormData()
+    data.append('runtime_mode', mode)
+    fetch('/runtime_mode', {
+        method: "POST",
+        body: data
+    })
+}
+
 
 function initTime() {
     t0 = null
@@ -169,6 +192,7 @@ function updSec() {
         case 'skip' : runtimeSkip() ; break;
         case 'reset': runtimeReset(); break;
     }
+    runtimeStatusBlinking = (lib.time() - runtimeStatusBlinkT0)*0.001 <= config.runtimeStatusBlinkTime;
     numClock.value = lib.timeStr();
 }
 
@@ -179,6 +203,12 @@ function updFrame() {
         segmentStatusOpacity = 1.;
     if (segmentStatus)
         segmentStatus.opacity = segmentStatusOpacity;
+    if (runtimeStatusBlinking)
+        runtimeStatusOpacity = lib.tri((lib.time() - t0)*0.001);
+    else
+        runtimeStatusOpacity = 1.;
+    if (runtimeStatus)
+        runtimeStatus.opacity = runtimeStatusOpacity;
 }
 
 initTime()

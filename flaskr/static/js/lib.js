@@ -34,7 +34,9 @@ export const config = {
     segStatusTextMarginX: 15,
     segStatusMarginY: 20, // for both type flag and text
     segStatusHeaderSize: 48,
-    segStatusCol: '#FFFFEB'
+    segStatusCol: '#FFFFEB',
+    runtimeStatusYRatio: 0.2,
+    runtimeStatusBlinkTime: 3
 };
 
 // Areas of the canvas
@@ -209,7 +211,7 @@ export function func_drawSlices(segments, clockCircX, clockCircY, clockRadius) {
             seg.group.add(arcSeg);
             seg.group.add(txt);
         }
-        // draw 12 o' clock line for last segment as dotted if it overlaps with next 
+        // draw 12 o' clock line for last segment as dotted if it overlaps with next
         if (i + 1 < segments.length && seg.title == segments[i + 1][0].title) {
             slice.dashes = [5];
         }
@@ -286,13 +288,13 @@ export function func_drawSegmentStatus(infoArea, numClockBorder) {
             const nextSegTextY = segStatusBorder.position.y + txtSize*0.5;
             const nextSegTypeFlagY = nextSegTextY - txtSize * 0.5;
 
-            const segTypeFlagX = infoArea.center.x - infoArea.width*0.5 + config.segStatusTypeFlagMarginX; 
+            const segTypeFlagX = infoArea.center.x - infoArea.width*0.5 + config.segStatusTypeFlagMarginX;
             const segTextX =  segTypeFlagX + config.segStatusTypeFlagW + config.segStatusTextMarginX;
 
             const getLineLengthRatio = (line) => {
                 // fudgy solution; higher values of w_ tolerate longer titles; doesn't consider font
                 const w_ = 0.45;
-                const w = config.segStatusHeaderSize * line.length*w_; 
+                const w = config.segStatusHeaderSize * line.length*w_;
                 return w / (segStatusBorder.width - config.segStatusTextMarginX - config.segStatusTypeFlagMarginX - config.segStatusTypeFlagW);
             }
 
@@ -361,6 +363,27 @@ export function func_drawSegmentStatus(infoArea, numClockBorder) {
     }
 }
 
+function runtimeStatusTitle(runtimeMode) {
+    switch(runtimeMode) {
+        case 'init' : return "READY" ;
+        case 'start': return "RUNNING";
+        case 'pause': return "PAUSE";
+        case 'skip' : return "SKIP" ;
+        case 'reset': return "RESET";
+    }
+}
+
+export function func_drawRuntimeStatus(infoArea) {
+    return (runtimeMode) => {
+        const runtimeStatusX = infoArea.center.x - infoArea.width*0.5 + config.segStatusTextMarginX;
+        const runtimeStatusY = infoArea.center.y + infoArea.height*config.runtimeStatusYRatio;
+        const runtimeStatus = two.makeGroup();
+        const msg = runtimeStatusTitle(runtimeMode);
+        addLine(runtimeStatus, msg, runtimeStatusX, runtimeStatusY);
+        return runtimeStatus;
+    }
+}
+
 // returns [current segment, next segment] as an array.
 // might return either as null, if on the last segment or later
 export function func_getSegmentStatus(segments) {
@@ -387,6 +410,6 @@ export function func_getSegmentStatus(segments) {
 }
 
 export function tri(t) {
-      const u = t%1. 
+      const u = t%1.
       return u <= 0.5 ? u * 2. : 1. - (u - 0.5) * 2.;
 }
