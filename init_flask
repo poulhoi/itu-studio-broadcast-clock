@@ -3,4 +3,4 @@ cd ~/itu-studio-broadcast-clock
 mkdir -p data
 source .venv/bin/activate
 flask --app flaskr init-db
-flask --app flaskr run
+flask --app flaskr run --host=0.0.0.0
