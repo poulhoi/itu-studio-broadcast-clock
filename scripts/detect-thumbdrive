@@ -2,14 +2,12 @@
 
 searchterm="DataTraveler"
 datapos="/home/pi/itu-studio-broadcast-clock/flaskr/data/segments.csv"
+mounted=0
 
-while true; do  
+while true; do
     res=$(lsusb | grep $searchterm)
-    mounted=0
-    if [ -n "$res" ]; then 
-        echo 'A'
+    if [ -n "$res" ]; then
         if [ "$mounted" == "0" ]; then
-            echo 'A1'
             mounted=1
             sudo mount /dev/sda1 /media/usb1
             sudo rm $datapos
@@ -23,4 +21,4 @@ while true; do
         mounted=0
     fi
     sleep 5
-done  
+done
