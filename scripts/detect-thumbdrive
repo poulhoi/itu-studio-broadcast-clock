@@ -2,20 +2,23 @@
 
 searchterm="DataTraveler"
 datapos="~/itu-studio-broadcast-clock/flaskr/data/segments.csv"
-res=$(lsusb | grep $searchterm)
-mounted=0
 
-if [ -n "$res"]; then 
-    if ["$mounted" == "0" ]; then
-        mounted=1
-        sudo mount /dev/sda1 /media/usb1 #> /dev/null 2>&1
-        sudo rm $datapos
-        sudo cp /media/usb1/*.csv $datapos
-        sudo sleep 1
-        sudo xdotool key F5
-        # sudo curl -X POST localhost:5000/runtime_mode -F "runtime_mode=reload"
-    fi
-else
-    sudo umount /dev/sda1 #> /dev/null 2>&1
+while true; do  
+    res=$(lsusb | grep $searchterm)
     mounted=0
-fi
+    if [ -n "$res"]; then 
+        if ["$mounted" == "0" ]; then
+            mounted=1
+            sudo mount /dev/sda1 /media/usb1 #> /dev/null 2>&1
+            sudo rm $datapos
+            sudo cp /media/usb1/*.csv $datapos
+            sudo sleep 1
+            sudo xdotool key F5
+            # sudo curl -X POST localhost:5000/runtime_mode -F "runtime_mode=reload"
+        fi
+    else
+        sudo umount /dev/sda1 #> /dev/null 2>&1
+        mounted=0
+    fi
+    sleep 5
+done  

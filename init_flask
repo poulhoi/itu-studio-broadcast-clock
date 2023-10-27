@@ -3,8 +3,3 @@ cd ~/itu-studio-broadcast-clock
 source .venv/bin/activate
 flask --app flaskr init-db
 flask --app flaskr run
-
-while true; do  
-    ./scripts/detect-thumbdrive
-    sleep 5
-done  
