@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 searchterm="DataTraveler"
-datapos="~/itu-studio-broadcast-clock/flaskr/data/segments.csv"
+datapos="/home/pi/itu-studio-broadcast-clock/flaskr/data/segments.csv"
 
 while true; do  
     res=$(lsusb | grep $searchterm)
