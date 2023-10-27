@@ -6,7 +6,7 @@ datapos="~/itu-studio-broadcast-clock/flaskr/data/segments.csv"
 while true; do  
     res=$(lsusb | grep $searchterm)
     mounted=0
-    if [ -n "$res"]; then 
+    if [ -n "$res" ]; then 
         if ["$mounted" == "0" ]; then
             mounted=1
             sudo mount /dev/sda1 /media/usb1 #> /dev/null 2>&1
