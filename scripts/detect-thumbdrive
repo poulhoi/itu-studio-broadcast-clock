@@ -7,7 +7,9 @@ while true; do
     res=$(lsusb | grep $searchterm)
     mounted=0
     if [ -n "$res" ]; then 
+        echo 'A'
         if [ "$mounted" == "0" ]; then
+            echo 'A1'
             mounted=1
             sudo mount /dev/sda1 /media/usb1
             sudo rm $datapos
@@ -16,6 +18,7 @@ while true; do
             sudo xdotool key F5
         fi
     else
+        echo 'B'
         sudo umount /dev/sda1
         mounted=0
     fi
