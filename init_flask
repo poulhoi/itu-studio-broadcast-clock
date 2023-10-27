@@ -1,6 +1,6 @@
 #!/bin/bash
-mkdir -p /home/pi/itu-studio-broadcast-clock/data/
-cd home/pi/itu-studio-broadcast-clock
+cd ~/itu-studio-broadcast-clock
+mkdir -p data
 source .venv/bin/activate
 flask --app flaskr init-db
 flask --app flaskr run
