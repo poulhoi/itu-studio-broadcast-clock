@@ -375,7 +375,7 @@ function runtimeStatusTitle(runtimeMode) {
 
 export function func_drawRuntimeStatus(infoArea) {
     return (runtimeMode) => {
-        const runtimeStatusX = infoArea.center.x - infoArea.width*0.5 + config.segStatusTextMarginX;
+        const runtimeStatusX = infoArea.center.x - infoArea.width*0.5 + config.segStatusTypeFlagMarginX + config.segStatusTypeFlagW + config.segStatusTextMarginX;
         const runtimeStatusY = infoArea.center.y + infoArea.height*config.runtimeStatusYRatio;
         const runtimeStatus = two.makeGroup();
         const msg = runtimeStatusTitle(runtimeMode);
