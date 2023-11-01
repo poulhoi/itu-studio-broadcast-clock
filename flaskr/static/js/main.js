@@ -72,7 +72,6 @@ function updRuntimeStatus() {
 }
 
 function updRuntimeMode() {
-    const prevRuntimeMode = runtimeMode;
     if (forceRuntimeMode) {
         runtimeMode = forceRuntimeMode;
         updRuntimeStatus();
@@ -85,8 +84,6 @@ function updRuntimeMode() {
                 updRuntimeStatus();
             })
             .catch(error => console.log(error))
-    }
-    if (prevRuntimeMode != runtimeMode) {
     }
 }
 
@@ -117,6 +114,9 @@ function updTime() {
 
 function runtimeInit() {
     arm = drawArm(0, arm);
+    drawSlices(0);
+    let [seg, nextSeg] = getSegmentStatus(0);
+    drawSegmentStatus(seg, nextSeg);
     t0 = lib.time();
     updTime();
 }
